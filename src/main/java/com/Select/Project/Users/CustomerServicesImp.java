@@ -6,12 +6,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.regex.Matcher;
 @Service
 public class CustomerServicesImp implements CustomerServices {
 
     @Autowired
     private CustomerRespositry customerRespositry;
+    
+    private static final Pattern VALID_EMAIL_ADDRESS_REGEX = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern VALID_PHONE_NUMBER_REGEX = Pattern.compile("^[0-9]{10}$");
 
     @Override
     public CustomerError getAllCustomers() {
@@ -46,8 +49,6 @@ public class CustomerServicesImp implements CustomerServices {
     public CustomerError addCustomer(Customers customers) {
 
         List<Customers> customersList = customerRespositry.findAll();
-        Pattern VALID_EMAIL_ADDRESS_REGEX = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE); 
-        Pattern VALID_PHONE_NUMBER_REGEX = Pattern.compile("^[0-9]{10}$");
        
         if (customers.getCustomerName() == null || customers.getCustomerEmail() == null || customers.getCustomerPhone() == null) {
             return new CustomerError(HttpStatus.BAD_REQUEST.value(), "Customer name, email, and phone are required", null);
@@ -67,4 +68,34 @@ public class CustomerServicesImp implements CustomerServices {
         customerRespositry.save(customers);
         return new CustomerError(HttpStatus.CREATED.value(), "Customer added successfully", List.of(customers));
     }
+
+    @Override
+    public CustomerError updateCustomerById(Long id, Customers customers) {
+        Customers existingCustomer = customerRespositry.findByCustomerId(id);
+        if (existingCustomer == null) {
+            return new CustomerError(HttpStatus.NOT_FOUND.value(), "Customer not found", null); 
+        }
+
+        if(customers.getCustomerName() != null) {
+            existingCustomer.setCustomerName(customers.getCustomerName());
+        }
+        if (customers.getCustomerEmail() != null) {
+            Matcher matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(customers.getCustomerEmail());
+            if (!matcher.matches()) {
+                return new CustomerError(HttpStatus.BAD_REQUEST.value(), "Invalid email address", null);
+            }
+            existingCustomer.setCustomerEmail(customers.getCustomerEmail());
+        }
+       if(customers.getCustomerPhone() != null) {
+        Matcher matcher = VALID_PHONE_NUMBER_REGEX.matcher(customers.getCustomerPhone());
+        if (!matcher.matches() || customers.getCustomerPhone().length() != 10) {
+            return new CustomerError(HttpStatus.BAD_REQUEST.value(), "Invalid phone number", null);
+        }
+        existingCustomer.setCustomerPhone(customers.getCustomerPhone());
+       }
+        
+        customerRespositry.save(existingCustomer);
+        return new CustomerError(HttpStatus.OK.value(), "Customer updated successfully", List.of(existingCustomer));
+    }
+    
 }

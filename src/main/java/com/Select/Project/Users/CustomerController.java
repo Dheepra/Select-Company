@@ -28,4 +28,11 @@ public class CustomerController {
     public CustomerError addCustomer(@RequestBody Customers customers) {
         return customerServices.addCustomer(customers);
     }
+
+    @PutMapping("/customers/{id}")
+    public CustomerError updateCustomerById(@PathVariable Long id, @RequestBody Customers customers) {
+        return customerServices.updateCustomerById(id, customers);
+    }
+
+    
 }
