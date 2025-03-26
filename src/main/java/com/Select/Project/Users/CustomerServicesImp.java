@@ -41,5 +41,10 @@ public class CustomerServicesImp implements CustomerServices {
         customerRespositry.deleteByCustomerId(id);
         return "Customer deleted successfully";
     }
-    
+
+    @Override
+    public CustomerError addCustomer(Customers customers) {
+        customerRespositry.save(customers);
+        return new CustomerError(HttpStatus.CREATED.value(), "Customer added successfully", List.of(customers));
+    }
 }
