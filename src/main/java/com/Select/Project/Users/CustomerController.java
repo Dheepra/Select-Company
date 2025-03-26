@@ -23,4 +23,9 @@ public class CustomerController {
     public String deleteCustomerById(@PathVariable Long id) {
         return customerServices.deleteCustomerById(id);
     }
+
+    @PostMapping("/customers")
+    public CustomerError addCustomer(@RequestBody Customers customers) {
+        return customerServices.addCustomer(customers);
+    }
 }
